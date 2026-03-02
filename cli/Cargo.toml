@@ -18,3 +18,4 @@ sha2 = "0.10"
 colored = "2.1"
 indicatif = "0.17"
 chrono = { version = "0.4", features = ["serde"] }
+rustyline = { version = "14.0", features = ["derive"] }
