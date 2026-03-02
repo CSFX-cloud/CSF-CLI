@@ -32,6 +32,7 @@ struct PublicKeyResponse {
 
 #[derive(Serialize, Deserialize)]
 struct ChangePasswordRequest {
+    old_password: String,
     new_password: String,
 }
 
@@ -83,10 +84,12 @@ async fn change_password(
     server: &str,
     token: &str,
     public_key: &RsaPublicKey,
+    old_password_plain: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     display::warn("password change required");
     let new_password = prompt_new_password()?;
-    let encrypted = encrypt_password(&new_password, public_key)?;
+    let encrypted_old = encrypt_password(old_password_plain, public_key)?;
+    let encrypted_new = encrypt_password(&new_password, public_key)?;
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/change-password", server.trim_end_matches('/'));
@@ -97,7 +100,8 @@ async fn change_password(
         .header("Content-Type", "application/json")
         .header("Authorization", format!("Bearer {}", token))
         .json(&ChangePasswordRequest {
-            new_password: encrypted,
+            old_password: encrypted_old,
+            new_password: encrypted_new,
         })
         .send()
         .await?;
@@ -209,7 +213,7 @@ pub async fn login() -> Result<(), Box<dyn std::error::Error>> {
         );
 
         if login_response.force_password_change {
-            change_password(&server, &login_response.token, &public_key).await?;
+            change_password(&server, &login_response.token, &public_key, &password).await?;
         }
     } else {
         let status = response.status();
