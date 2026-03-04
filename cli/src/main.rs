@@ -24,6 +24,7 @@ enum Commands {
     Login,
     Logout,
     Status,
+    Token,
     #[command(subcommand, about = "Manage storage volumes")]
     Volumes(volumes::VolumeCommands),
     #[command(subcommand, about = "View registry and agents")]
@@ -43,6 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Login) => user::login::login().await?,
         Some(Commands::Logout) => user::logout::logout().await?,
         Some(Commands::Status) => user::status::status().await?,
+        Some(Commands::Token) => user::token::token().await?,
         Some(Commands::Volumes(cmd)) => volumes::run(cmd).await?,
         Some(Commands::Registry(cmd)) => registry::run(cmd).await?,
         Some(Commands::Nodes(cmd)) => nodes::run(cmd).await?,
