@@ -36,6 +36,9 @@ const COMMANDS: &[(&str, &str)] = &[
     ("registry pending-delete <id>", "cancel a pending registration"),
     ("registry stats", "show registry statistics"),
     ("registry tokens", "list active registration tokens"),
+    ("registry bootstrap-create", "create a cluster-wide bootstrap token"),
+    ("registry bootstrap-list", "list active bootstrap tokens"),
+    ("registry bootstrap-revoke <id>", "revoke a bootstrap token"),
     ("nodes list", "list all nodes"),
     ("nodes get <id>", "show node details"),
     ("nodes metrics", "show system metrics"),
@@ -142,6 +145,9 @@ fn print_help() {
                 "registry pending-delete <id>",
                 "registry stats",
                 "registry tokens",
+                "registry bootstrap-create",
+                "registry bootstrap-list",
+                "registry bootstrap-revoke <id>",
             ],
         ),
         ("Nodes", &["nodes list", "nodes get <id>", "nodes metrics", "nodes agent-metrics <id>"]),
@@ -295,6 +301,20 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
         }
         ["registry", "stats"] => crate::registry::run(RegistryCommands::Stats).await?,
         ["registry", "tokens"] => crate::registry::run(RegistryCommands::Tokens).await?,
+        ["registry", "bootstrap-create"] => {
+            crate::registry::run(RegistryCommands::BootstrapCreate {
+                description: None,
+                ttl: None,
+                max_uses: None,
+            })
+            .await?
+        }
+        ["registry", "bootstrap-list"] => {
+            crate::registry::run(RegistryCommands::BootstrapList).await?
+        }
+        ["registry", "bootstrap-revoke", id] => {
+            crate::registry::run(RegistryCommands::BootstrapRevoke { id: id.to_string() }).await?
+        }
 
         ["nodes", "list"] => crate::nodes::run(NodeCommands::List).await?,
         ["nodes", "get", id] => {
