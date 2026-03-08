@@ -12,6 +12,7 @@ use crate::events::EventCommands;
 use crate::networks::NetworkCommands;
 use crate::nodes::NodeCommands;
 use crate::registry::RegistryCommands;
+use crate::system::SystemCommands;
 use crate::tenant::TenantCommands;
 use crate::volumes::VolumeCommands;
 use crate::workloads::WorkloadCommands;
@@ -41,12 +42,18 @@ const COMMANDS: &[(&str, &str)] = &[
     ("registry bootstrap-revoke <id>", "revoke a bootstrap token"),
     ("nodes list", "list all nodes"),
     ("nodes get <id>", "show node details"),
-    ("nodes metrics", "show system metrics"),
+    ("nodes metrics", "show cluster node metrics"),
+    ("nodes metrics --watch", "live-refresh cluster node metrics"),
     ("nodes agent-metrics <id>", "show metrics for a specific agent"),
+    ("nodes agent-metrics <id> --watch", "live-refresh agent metrics"),
+    ("system stats", "show cluster-wide aggregated stats"),
+    ("system stats --watch", "live-refresh cluster stats"),
     ("workloads list", "list all workloads"),
     ("workloads get <id>", "show workload details"),
     ("workloads create <name> <image>", "schedule a new workload"),
     ("workloads delete <id>", "delete a workload"),
+    ("workloads metrics <id>", "show workload resource usage"),
+    ("workloads metrics <id> --watch", "live-refresh workload metrics"),
     ("events list", "list failover and audit events"),
     ("networks list", "list all overlay networks"),
     ("networks get <id>", "show network details"),
@@ -150,7 +157,18 @@ fn print_help() {
                 "registry bootstrap-revoke <id>",
             ],
         ),
-        ("Nodes", &["nodes list", "nodes get <id>", "nodes metrics", "nodes agent-metrics <id>"]),
+        (
+            "Nodes",
+            &[
+                "nodes list",
+                "nodes get <id>",
+                "nodes metrics",
+                "nodes metrics --watch",
+                "nodes agent-metrics <id>",
+                "nodes agent-metrics <id> --watch",
+            ],
+        ),
+        ("System", &["system stats", "system stats --watch"]),
         (
             "Workloads",
             &[
@@ -158,6 +176,8 @@ fn print_help() {
                 "workloads get <id>",
                 "workloads create <name> <image>",
                 "workloads delete <id>",
+                "workloads metrics <id>",
+                "workloads metrics <id> --watch",
             ],
         ),
         ("Events", &["events list"]),
@@ -320,11 +340,32 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
         ["nodes", "get", id] => {
             crate::nodes::run(NodeCommands::Get { id: id.to_string() }).await?
         }
-        ["nodes", "metrics"] => crate::nodes::run(NodeCommands::Metrics).await?,
+        ["nodes", "metrics"] => {
+            crate::nodes::run(NodeCommands::Metrics { watch: false }).await?
+        }
+        ["nodes", "metrics", "--watch"] => {
+            crate::nodes::run(NodeCommands::Metrics { watch: true }).await?
+        }
         ["nodes", "agent-metrics", id] => {
-            crate::nodes::run(NodeCommands::AgentMetrics { id: id.to_string() }).await?
+            crate::nodes::run(NodeCommands::AgentMetrics { id: id.to_string(), watch: false }).await?
+        }
+        ["nodes", "agent-metrics", id, "--watch"] => {
+            crate::nodes::run(NodeCommands::AgentMetrics { id: id.to_string(), watch: true }).await?
         }
 
+        ["system", "stats"] => {
+            crate::system::run(SystemCommands::Stats { watch: false }).await?
+        }
+        ["system", "stats", "--watch"] => {
+            crate::system::run(SystemCommands::Stats { watch: true }).await?
+        }
+
+        ["workloads", "metrics", id] => {
+            crate::workloads::run(WorkloadCommands::Metrics { id: id.to_string(), watch: false }).await?
+        }
+        ["workloads", "metrics", id, "--watch"] => {
+            crate::workloads::run(WorkloadCommands::Metrics { id: id.to_string(), watch: true }).await?
+        }
         ["workloads", "list"] => crate::workloads::run(WorkloadCommands::List).await?,
         ["workloads", "create", name, image] => {
             crate::workloads::run(WorkloadCommands::Create {

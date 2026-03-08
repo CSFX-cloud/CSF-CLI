@@ -6,12 +6,20 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 struct AgentMetrics {
     cpu_usage_percent: Option<f32>,
+    cpu_cores: Option<i32>,
     memory_total_bytes: Option<i64>,
     memory_used_bytes: Option<i64>,
+    memory_usage_percent: Option<f32>,
     disk_total_bytes: Option<i64>,
     disk_used_bytes: Option<i64>,
+    disk_usage_percent: Option<f32>,
     network_rx_bytes: Option<i64>,
     network_tx_bytes: Option<i64>,
+    hostname: Option<String>,
+    os_name: Option<String>,
+    os_version: Option<String>,
+    kernel_version: Option<String>,
+    uptime_seconds: Option<i64>,
     timestamp: Option<String>,
 }
 
@@ -33,24 +41,40 @@ fn usage_bar(pct: f32, width: usize) -> String {
     )
 }
 
-pub async fn run(id: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let (client, server, token) = auth()?;
-    let url = format!("{}/agents/{}/metrics", base_url(&server), id);
+fn format_uptime(seconds: i64) -> String {
+    let days = seconds / 86400;
+    let hours = (seconds % 86400) / 3600;
+    let minutes = (seconds % 3600) / 60;
+    format!("{}d {}h {}m", days, hours, minutes)
+}
 
-    let pb = display::spinner("fetching agent metrics...");
-    let data = get_json(&client, &url, &token).await;
-    pb.finish_and_clear();
+fn print_metrics(id: &str, m: &AgentMetrics) {
+    section(&format!("Node Metrics  /  {}", &id[..8.min(id.len())]));
 
-    let data = data?;
-    let m: AgentMetrics = serde_json::from_value(data)?;
-
-    section("Nodes  /  Agent Metrics");
-
-    if let Some(ts) = &m.timestamp {
-        kv("Timestamp", &ts[..16.min(ts.len())]);
-        println!();
+    if let Some(ref ts) = m.timestamp {
+        kv("As of", &ts[..16.min(ts.len())]);
+    }
+    if let Some(ref h) = m.hostname {
+        kv("Hostname", h);
+    }
+    if let Some(ref os) = m.os_name {
+        kv(
+            "OS",
+            &format!("{} {}", os, m.os_version.as_deref().unwrap_or("")),
+        );
+    }
+    if let Some(ref k) = m.kernel_version {
+        kv("Kernel", k);
+    }
+    if let Some(uptime) = m.uptime_seconds {
+        kv("Uptime", &format_uptime(uptime));
     }
 
+    println!();
+
+    if let Some(cores) = m.cpu_cores {
+        kv("CPU Cores", &cores.to_string());
+    }
     if let Some(pct) = m.cpu_usage_percent {
         println!("  {:<20} {}", "CPU Usage".dimmed(), usage_bar(pct, 30));
     }
@@ -66,7 +90,8 @@ pub async fn run(id: &str) -> Result<(), Box<dyn std::error::Error>> {
                 total as f64 / 1_073_741_824.0
             ),
         );
-        let pct = used as f32 / total as f32 * 100.0;
+    }
+    if let Some(pct) = m.memory_usage_percent {
         println!("  {:<20} {}", "Memory Usage".dimmed(), usage_bar(pct, 30));
     }
 
@@ -81,7 +106,8 @@ pub async fn run(id: &str) -> Result<(), Box<dyn std::error::Error>> {
                 total as f64 / 1_073_741_824.0
             ),
         );
-        let pct = used as f32 / total as f32 * 100.0;
+    }
+    if let Some(pct) = m.disk_usage_percent {
         println!("  {:<20} {}", "Disk Usage".dimmed(), usage_bar(pct, 30));
     }
 
@@ -93,6 +119,32 @@ pub async fn run(id: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!();
+}
 
-    Ok(())
+pub async fn run(id: &str, watch: bool) -> Result<(), Box<dyn std::error::Error>> {
+    let (client, server, token) = auth()?;
+    let url = format!("{}/agents/{}/metrics/latest", base_url(&server), id);
+
+    if !watch {
+        let pb = display::spinner("fetching agent metrics...");
+        let data = get_json(&client, &url, &token).await;
+        pb.finish_and_clear();
+        let m: AgentMetrics = serde_json::from_value(data?)?;
+        print_metrics(id, &m);
+        return Ok(());
+    }
+
+    loop {
+        let data = get_json(&client, &url, &token).await;
+        print!("\x1B[2J\x1B[H");
+        match data {
+            Ok(v) => match serde_json::from_value::<AgentMetrics>(v) {
+                Ok(m) => print_metrics(id, &m),
+                Err(e) => display::error(&format!("parse error: {}", e)),
+            },
+            Err(e) => display::error(&format!("fetch error: {}", e)),
+        }
+        println!("  {}", "refreshing every 5s — Ctrl+C to exit".dimmed());
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+    }
 }

@@ -6,6 +6,7 @@ mod networks;
 mod nodes;
 mod registry;
 mod repl;
+mod system;
 mod tenant;
 mod user;
 mod volumes;
@@ -43,6 +44,8 @@ enum Commands {
     Networks(networks::NetworkCommands),
     #[command(subcommand, about = "Manage tenant organization, users and roles")]
     Tenant(tenant::TenantCommands),
+    #[command(subcommand, about = "Cluster-wide system statistics")]
+    System(system::SystemCommands),
 }
 
 #[tokio::main]
@@ -64,6 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Events(cmd)) => events::run(cmd).await?,
         Some(Commands::Networks(cmd)) => networks::run(cmd).await?,
         Some(Commands::Tenant(cmd)) => tenant::run(cmd).await?,
+        Some(Commands::System(cmd)) => system::run(cmd).await?,
     }
 
     Ok(())

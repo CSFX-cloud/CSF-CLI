@@ -2,6 +2,7 @@ pub mod create;
 pub mod delete;
 pub mod get;
 pub mod list;
+pub mod metrics;
 
 use clap::Subcommand;
 
@@ -20,6 +21,11 @@ pub enum WorkloadCommands {
         disk: i64,
     },
     Delete { id: String },
+    Metrics {
+        id: String,
+        #[arg(long, short)]
+        watch: bool,
+    },
 }
 
 pub async fn run(cmd: WorkloadCommands) -> Result<(), Box<dyn std::error::Error>> {
@@ -30,5 +36,6 @@ pub async fn run(cmd: WorkloadCommands) -> Result<(), Box<dyn std::error::Error>
             create::run(name, image, cpu, memory, disk).await
         }
         WorkloadCommands::Delete { id } => delete::run(&id).await,
+        WorkloadCommands::Metrics { id, watch } => metrics::run(&id, watch).await,
     }
 }

@@ -9,15 +9,22 @@ use clap::Subcommand;
 pub enum NodeCommands {
     List,
     Get { id: String },
-    Metrics,
-    AgentMetrics { id: String },
+    Metrics {
+        #[arg(long, short)]
+        watch: bool,
+    },
+    AgentMetrics {
+        id: String,
+        #[arg(long, short)]
+        watch: bool,
+    },
 }
 
 pub async fn run(cmd: NodeCommands) -> Result<(), Box<dyn std::error::Error>> {
     match cmd {
         NodeCommands::List => list::run().await,
         NodeCommands::Get { id } => get::run(&id).await,
-        NodeCommands::Metrics => metrics::run().await,
-        NodeCommands::AgentMetrics { id } => agent_metrics::run(&id).await,
+        NodeCommands::Metrics { watch } => metrics::run(watch).await,
+        NodeCommands::AgentMetrics { id, watch } => agent_metrics::run(&id, watch).await,
     }
 }
