@@ -1,4 +1,5 @@
 pub mod agents;
+pub mod bootstrap;
 pub mod deregister;
 pub mod pending;
 pub mod pre_register;
@@ -29,6 +30,19 @@ pub enum RegistryCommands {
     Deregister { id: String },
     Stats,
     Tokens,
+    #[command(name = "bootstrap-create")]
+    BootstrapCreate {
+        #[arg(long)]
+        description: Option<String>,
+        #[arg(long)]
+        ttl: Option<i64>,
+        #[arg(long, name = "max-uses")]
+        max_uses: Option<i32>,
+    },
+    #[command(name = "bootstrap-list")]
+    BootstrapList,
+    #[command(name = "bootstrap-revoke")]
+    BootstrapRevoke { id: String },
 }
 
 pub async fn run(cmd: RegistryCommands) -> Result<(), Box<dyn std::error::Error>> {
@@ -43,5 +57,10 @@ pub async fn run(cmd: RegistryCommands) -> Result<(), Box<dyn std::error::Error>
         RegistryCommands::Deregister { id } => deregister::agent(&id).await,
         RegistryCommands::Stats => stats::run().await,
         RegistryCommands::Tokens => tokens::run().await,
+        RegistryCommands::BootstrapCreate { description, ttl, max_uses } => {
+            bootstrap::create(description, ttl, max_uses).await
+        }
+        RegistryCommands::BootstrapList => bootstrap::list().await,
+        RegistryCommands::BootstrapRevoke { id } => bootstrap::revoke(&id).await,
     }
 }

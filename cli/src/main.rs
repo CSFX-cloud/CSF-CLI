@@ -6,6 +6,7 @@ mod networks;
 mod nodes;
 mod registry;
 mod repl;
+mod tenant;
 mod user;
 mod volumes;
 mod workloads;
@@ -40,6 +41,8 @@ enum Commands {
     Events(events::EventCommands),
     #[command(subcommand, about = "Manage overlay networks")]
     Networks(networks::NetworkCommands),
+    #[command(subcommand, about = "Manage tenant organization, users and roles")]
+    Tenant(tenant::TenantCommands),
 }
 
 #[tokio::main]
@@ -60,6 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Workloads(cmd)) => workloads::run(cmd).await?,
         Some(Commands::Events(cmd)) => events::run(cmd).await?,
         Some(Commands::Networks(cmd)) => networks::run(cmd).await?,
+        Some(Commands::Tenant(cmd)) => tenant::run(cmd).await?,
     }
 
     Ok(())

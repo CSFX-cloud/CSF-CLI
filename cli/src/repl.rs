@@ -12,6 +12,7 @@ use crate::events::EventCommands;
 use crate::networks::NetworkCommands;
 use crate::nodes::NodeCommands;
 use crate::registry::RegistryCommands;
+use crate::tenant::TenantCommands;
 use crate::volumes::VolumeCommands;
 use crate::workloads::WorkloadCommands;
 
@@ -35,6 +36,9 @@ const COMMANDS: &[(&str, &str)] = &[
     ("registry pending-delete <id>", "cancel a pending registration"),
     ("registry stats", "show registry statistics"),
     ("registry tokens", "list active registration tokens"),
+    ("registry bootstrap-create", "create a cluster-wide bootstrap token"),
+    ("registry bootstrap-list", "list active bootstrap tokens"),
+    ("registry bootstrap-revoke <id>", "revoke a bootstrap token"),
     ("nodes list", "list all nodes"),
     ("nodes get <id>", "show node details"),
     ("nodes metrics", "show system metrics"),
@@ -53,6 +57,13 @@ const COMMANDS: &[(&str, &str)] = &[
     ("networks members --network <id>", "list network members"),
     ("networks member-add --network <id> --workload <id>", "add workload to network"),
     ("networks member-remove --network <id> --workload <id>", "remove workload from network"),
+    ("tenant info", "show organization details"),
+    ("tenant users", "list users in the organization"),
+    ("tenant user-get <id>", "show user details"),
+    ("tenant user-create <username> <password> --role <role-id>", "create a new user"),
+    ("tenant user-delete <id>", "delete a user"),
+    ("tenant roles", "list available roles"),
+    ("tenant set-role --user <id> --role <role-id>", "assign a role to a user"),
     ("help", "show available commands"),
     ("exit", "exit the shell"),
 ];
@@ -134,6 +145,9 @@ fn print_help() {
                 "registry pending-delete <id>",
                 "registry stats",
                 "registry tokens",
+                "registry bootstrap-create",
+                "registry bootstrap-list",
+                "registry bootstrap-revoke <id>",
             ],
         ),
         ("Nodes", &["nodes list", "nodes get <id>", "nodes metrics", "nodes agent-metrics <id>"]),
@@ -159,6 +173,18 @@ fn print_help() {
                 "networks members --network <id>",
                 "networks member-add --network <id> --workload <id>",
                 "networks member-remove --network <id> --workload <id>",
+            ],
+        ),
+        (
+            "Tenant",
+            &[
+                "tenant info",
+                "tenant users",
+                "tenant user-get <id>",
+                "tenant user-create <username> <password> --role <role-id>",
+                "tenant user-delete <id>",
+                "tenant roles",
+                "tenant set-role --user <id> --role <role-id>",
             ],
         ),
         ("Shell", &["help", "exit"]),
@@ -275,6 +301,20 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
         }
         ["registry", "stats"] => crate::registry::run(RegistryCommands::Stats).await?,
         ["registry", "tokens"] => crate::registry::run(RegistryCommands::Tokens).await?,
+        ["registry", "bootstrap-create"] => {
+            crate::registry::run(RegistryCommands::BootstrapCreate {
+                description: None,
+                ttl: None,
+                max_uses: None,
+            })
+            .await?
+        }
+        ["registry", "bootstrap-list"] => {
+            crate::registry::run(RegistryCommands::BootstrapList).await?
+        }
+        ["registry", "bootstrap-revoke", id] => {
+            crate::registry::run(RegistryCommands::BootstrapRevoke { id: id.to_string() }).await?
+        }
 
         ["nodes", "list"] => crate::nodes::run(NodeCommands::List).await?,
         ["nodes", "get", id] => {
@@ -369,6 +409,42 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
             let network = parse_flag(parts, "--network").unwrap_or("").to_string();
             let workload = parse_flag(parts, "--workload").unwrap_or("").to_string();
             crate::networks::run(NetworkCommands::MemberRemove { network, workload }).await?
+        }
+
+        ["tenant", "info"] => crate::tenant::run(TenantCommands::Info).await?,
+        ["tenant", "users"] => crate::tenant::run(TenantCommands::Users).await?,
+        ["tenant", "user-get", id] => {
+            crate::tenant::run(TenantCommands::UserGet { id: id.to_string() }).await?
+        }
+        ["tenant", "user-delete", id] => {
+            crate::tenant::run(TenantCommands::UserDelete { id: id.to_string() }).await?
+        }
+        ["tenant", "roles"] => crate::tenant::run(TenantCommands::Roles).await?,
+        parts if parts.first() == Some(&"tenant") && parts.get(1) == Some(&"user-create") => {
+            if parts.len() < 4 {
+                display::error("usage: tenant user-create <username> <password> --role <role-id>");
+            } else {
+                let username = parts[2].to_string();
+                let password = parts[3].to_string();
+                let role = parse_flag(parts, "--role").unwrap_or("").to_string();
+                let email = parse_flag(parts, "--email").map(|s| s.to_string());
+                let force = parse_flag(parts, "--force-password-change")
+                    .map(|v| v == "true")
+                    .unwrap_or(false);
+                crate::tenant::run(TenantCommands::UserCreate {
+                    username,
+                    password,
+                    role,
+                    email,
+                    force_password_change: force,
+                })
+                .await?
+            }
+        }
+        parts if parts.first() == Some(&"tenant") && parts.get(1) == Some(&"set-role") => {
+            let user = parse_flag(parts, "--user").unwrap_or("").to_string();
+            let role = parse_flag(parts, "--role").unwrap_or("").to_string();
+            crate::tenant::run(TenantCommands::SetRole { user, role }).await?
         }
 
         ["help"] | ["?"] => print_help(),
