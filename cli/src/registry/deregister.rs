@@ -14,21 +14,3 @@ pub async fn agent(id: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-pub async fn pending(id: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let (client, server, token) = auth()?;
-    let url = format!(
-        "{}/registry/admin/agents/pending/{}",
-        base_url(&server),
-        id
-    );
-
-    let pb = display::spinner("cancelling pending registration...");
-    let result = delete_req(&client, &url, &token).await;
-    pb.finish_and_clear();
-
-    result?;
-    display::success(&format!("pending registration {} cancelled", id));
-
-    Ok(())
-}

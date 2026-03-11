@@ -22,7 +22,7 @@ The `csf` binary is installed to `~/.cargo/bin/csf`. Ensure `~/.cargo/bin` is in
 git pull
 cargo install --path cli --force
 ```
-
+@
 ## Usage
 
 ```

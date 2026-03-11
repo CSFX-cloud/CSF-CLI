@@ -31,12 +31,8 @@ const COMMANDS: &[(&str, &str)] = &[
     ("volumes snapshot-create --volume <id> --name <name>", "create a snapshot"),
     ("registry agents", "list registered agents"),
     ("registry agents-get <id>", "show agent details"),
-    ("registry pre-register <name> <hostname>", "pre-register a new node"),
     ("registry deregister <id>", "deregister an agent"),
-    ("registry pending", "list pending registrations"),
-    ("registry pending-delete <id>", "cancel a pending registration"),
     ("registry stats", "show registry statistics"),
-    ("registry tokens", "list active registration tokens"),
     ("registry bootstrap-create", "create a cluster-wide bootstrap token"),
     ("registry bootstrap-list", "list active bootstrap tokens"),
     ("registry bootstrap-revoke <id>", "revoke a bootstrap token"),
@@ -71,6 +67,7 @@ const COMMANDS: &[(&str, &str)] = &[
     ("tenant user-delete <id>", "delete a user"),
     ("tenant roles", "list available roles"),
     ("tenant set-role --user <id> --role <role-id>", "assign a role to a user"),
+    ("clear", "clear the terminal screen"),
     ("help", "show available commands"),
     ("exit", "exit the shell"),
 ];
@@ -146,12 +143,8 @@ fn print_help() {
             &[
                 "registry agents",
                 "registry agents-get <id>",
-                "registry pre-register <name> <hostname>",
                 "registry deregister <id>",
-                "registry pending",
-                "registry pending-delete <id>",
                 "registry stats",
-                "registry tokens",
                 "registry bootstrap-create",
                 "registry bootstrap-list",
                 "registry bootstrap-revoke <id>",
@@ -207,7 +200,7 @@ fn print_help() {
                 "tenant set-role --user <id> --role <role-id>",
             ],
         ),
-        ("Shell", &["help", "exit"]),
+        ("Shell", &["clear", "help", "exit"]),
     ];
 
     for (group, cmds) in groups {
@@ -292,35 +285,10 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
         ["registry", "agents-get", id] => {
             crate::registry::run(RegistryCommands::AgentsGet { id: id.to_string() }).await?
         }
-        ["registry", "pre-register", name, hostname] => {
-            crate::registry::run(RegistryCommands::PreRegister {
-                name: name.to_string(),
-                hostname: hostname.to_string(),
-                os: None,
-                arch: None,
-                ttl: None,
-            })
-            .await?
-        }
-        ["registry", "pre-register", name, hostname, "--os", os] => {
-            crate::registry::run(RegistryCommands::PreRegister {
-                name: name.to_string(),
-                hostname: hostname.to_string(),
-                os: Some(os.to_string()),
-                arch: None,
-                ttl: None,
-            })
-            .await?
-        }
         ["registry", "deregister", id] => {
             crate::registry::run(RegistryCommands::Deregister { id: id.to_string() }).await?
         }
-        ["registry", "pending"] => crate::registry::run(RegistryCommands::Pending).await?,
-        ["registry", "pending-delete", id] => {
-            crate::registry::run(RegistryCommands::PendingDelete { id: id.to_string() }).await?
-        }
         ["registry", "stats"] => crate::registry::run(RegistryCommands::Stats).await?,
-        ["registry", "tokens"] => crate::registry::run(RegistryCommands::Tokens).await?,
         ["registry", "bootstrap-create"] => {
             crate::registry::run(RegistryCommands::BootstrapCreate {
                 description: None,
@@ -488,6 +456,10 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
             crate::tenant::run(TenantCommands::SetRole { user, role }).await?
         }
 
+        ["clear"] => {
+            print!("\x1B[2J\x1B[H");
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        }
         ["help"] | ["?"] => print_help(),
 
         [cmd, ..] => {

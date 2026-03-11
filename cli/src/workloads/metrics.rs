@@ -13,13 +13,11 @@ struct Workload {
     disk_bytes: i64,
     status: String,
     assigned_agent_id: Option<String>,
-    container_id: Option<String>,
 }
 
 #[derive(Deserialize)]
 struct AgentMetrics {
     cpu_usage_percent: Option<f32>,
-    cpu_cores: Option<i32>,
     memory_total_bytes: Option<i64>,
     memory_used_bytes: Option<i64>,
     disk_total_bytes: Option<i64>,

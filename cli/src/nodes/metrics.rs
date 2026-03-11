@@ -6,7 +6,6 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 struct NodeStats {
     agent_id: String,
-    name: String,
     hostname: String,
     status: String,
     cpu_usage_percent: Option<f32>,
@@ -102,11 +101,10 @@ fn print_stats(stats: &ClusterStats) {
     }
 
     let mut table = Table::new(vec![
-        "ID", "NAME", "HOSTNAME", "STATUS", "CPU", "MEM USED", "MEM TOTAL", "DISK USED",
-        "DISK TOTAL",
+        "ID", "HOSTNAME", "STATUS", "CPU", "MEM USED", "MEM TOTAL", "DISK USED", "DISK TOTAL",
     ])
     .with_color(|col, val| {
-        if col == 3 {
+        if col == 2 {
             status_color(val)
         } else {
             colored::Color::White
@@ -137,7 +135,6 @@ fn print_stats(stats: &ClusterStats) {
 
         table.add_row(vec![
             n.agent_id[..8].to_string(),
-            n.name.clone(),
             n.hostname.clone(),
             n.status.clone(),
             cpu,

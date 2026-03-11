@@ -5,7 +5,6 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 struct Agent {
     id: String,
-    name: String,
     hostname: String,
     ip_address: Option<String>,
     os_type: String,
@@ -35,18 +34,10 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut table = Table::new(vec![
-        "ID",
-        "NAME",
-        "HOSTNAME",
-        "IP",
-        "OS",
-        "ARCH",
-        "VERSION",
-        "STATUS",
-        "HEARTBEAT",
+        "ID", "HOSTNAME", "IP", "OS", "ARCH", "VERSION", "STATUS", "HEARTBEAT",
     ])
     .with_color(|col, val| {
-        if col == 7 {
+        if col == 6 {
             display::status_color(val)
         } else {
             colored::Color::White
@@ -56,7 +47,6 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     for a in &agents {
         table.add_row(vec![
             a.id[..8].to_string(),
-            a.name.clone(),
             a.hostname.clone(),
             a.ip_address.clone().unwrap_or_else(|| "-".to_string()),
             format!("{} {}", a.os_type, a.os_version),

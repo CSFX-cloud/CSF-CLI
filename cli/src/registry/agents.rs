@@ -34,21 +34,18 @@ pub async fn list() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let mut table = Table::new(vec![
-        "ID", "NAME", "HOSTNAME", "IP", "OS", "ARCH", "VERSION", "STATUS",
-    ])
-    .with_color(|col, val| {
-        if col == 7 {
-            status_color(val)
-        } else {
-            colored::Color::White
-        }
-    });
+    let mut table = Table::new(vec!["ID", "HOSTNAME", "IP", "OS", "ARCH", "VERSION", "STATUS"])
+        .with_color(|col, val| {
+            if col == 6 {
+                status_color(val)
+            } else {
+                colored::Color::White
+            }
+        });
 
     for a in &agents {
         table.add_row(vec![
             a.id[..8].to_string(),
-            a.name.clone(),
             a.hostname.clone(),
             a.ip_address.clone().unwrap_or_else(|| "-".to_string()),
             a.os_type.clone(),
