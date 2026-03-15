@@ -120,6 +120,8 @@ pub async fn login() -> Result<(), Box<dyn std::error::Error>> {
     let mut config = load_config().unwrap_or_else(|| Config {
         server: String::new(),
         token: None,
+        compose_dir: None,
+        ghcr_org: None,
     });
 
     let server: String = if config.server.is_empty() {

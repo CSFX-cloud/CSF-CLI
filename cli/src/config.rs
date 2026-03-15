@@ -6,6 +6,8 @@ use std::path::PathBuf;
 pub struct Config {
     pub server: String,
     pub token: Option<String>,
+    pub compose_dir: Option<String>,
+    pub ghcr_org: Option<String>,
 }
 
 pub fn get_config_path() -> PathBuf {
