@@ -1,56 +1,16 @@
-use crate::config::load_config;
 use crate::display;
-use crate::http::{auth, base_url, get_json};
-use std::process::Stdio;
-use tokio::process::Command;
+use crate::http::{auth, base_url, get_json, post_json};
+use serde_json::json;
 
 pub async fn run(version: String) -> Result<(), Box<dyn std::error::Error>> {
-    let config = load_config().ok_or("not configured, run: csfx login")?;
+    let (client, server, token) = auth()?;
+    let url = format!("{}/system/update", base_url(&server));
 
-    let compose_dir = config
-        .compose_dir
-        .ok_or("compose_dir not set in ~/.csf/config.json")?;
-    let ghcr_org = config
-        .ghcr_org
-        .ok_or("ghcr_org not set in ~/.csf/config.json")?;
+    let resp = post_json(&client, &url, &token, &json!({ "version": version })).await?;
 
-    let compose_file = format!("{}/docker-compose.prod.yml", compose_dir.trim_end_matches('/'));
+    display::kv("status", resp["status"].as_str().unwrap_or("-"));
+    display::kv("version", resp["version"].as_str().unwrap_or("-"));
 
-    if ghcr_org != "local" {
-        display::info(&format!("pulling images for version {}", version));
-        run_compose(&compose_file, &ghcr_org, &version, &["pull"]).await?;
-    } else {
-        display::info("local org detected, skipping pull");
-    }
-
-    display::info("restarting services");
-    run_compose(&compose_file, &ghcr_org, &version, &["up", "-d"]).await?;
-
-    display::success(&format!("updated to {}", version));
-    Ok(())
-}
-
-async fn run_compose(
-    compose_file: &str,
-    ghcr_org: &str,
-    version: &str,
-    args: &[&str],
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd_args = vec!["compose", "-f", compose_file];
-    cmd_args.extend_from_slice(args);
-
-    let status = Command::new("docker")
-        .args(&cmd_args)
-        .env("GHCR_ORG", ghcr_org)
-        .env("CSF_VERSION", version)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .status()
-        .await?;
-
-    if !status.success() {
-        return Err(format!("docker compose {} failed: exit {}", args.join(" "), status).into());
-    }
     Ok(())
 }
 
