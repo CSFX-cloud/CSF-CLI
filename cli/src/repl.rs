@@ -72,9 +72,9 @@ const COMMANDS: &[(&str, &str)] = &[
     ("exit", "exit the shell"),
 ];
 
-struct CsfHelper;
+struct CsfxHelper;
 
-impl Completer for CsfHelper {
+impl Completer for CsfxHelper {
     type Candidate = Pair;
 
     fn complete(
@@ -96,7 +96,7 @@ impl Completer for CsfHelper {
     }
 }
 
-impl Hinter for CsfHelper {
+impl Hinter for CsfxHelper {
     type Hint = String;
 
     fn hint(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> Option<String> {
@@ -110,15 +110,15 @@ impl Hinter for CsfHelper {
     }
 }
 
-impl Highlighter for CsfHelper {
+impl Highlighter for CsfxHelper {
     fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
         Cow::Owned(hint.dimmed().to_string())
     }
 }
 
-impl Validator for CsfHelper {}
+impl Validator for CsfxHelper {}
 
-impl Helper for CsfHelper {}
+impl Helper for CsfxHelper {}
 
 fn print_help() {
     display::section("Commands");
@@ -476,11 +476,11 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .completion_type(CompletionType::List)
         .build();
 
-    let mut rl: Editor<CsfHelper, _> = Editor::with_config(config)?;
-    rl.set_helper(Some(CsfHelper));
+    let mut rl: Editor<CsfxHelper, _> = Editor::with_config(config)?;
+    rl.set_helper(Some(CsfxHelper));
 
     let history_path = dirs::home_dir().map(|mut p| {
-        p.push(".csf");
+        p.push(".csfx");
         let _ = std::fs::create_dir_all(&p);
         p.push("history");
         p

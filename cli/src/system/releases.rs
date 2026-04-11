@@ -2,7 +2,7 @@ use crate::display;
 use colored::Colorize;
 use serde::Deserialize;
 
-const RELEASES_API: &str = "https://api.github.com/repos/CSFX-cloud/CSF-Core/releases";
+const RELEASES_API: &str = "https://api.github.com/repos/CSFX-cloud/CSFX-Core/releases";
 const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Deserialize)]

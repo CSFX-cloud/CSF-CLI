@@ -1,4 +1,4 @@
-# CSF-CLI
+# CSFX-CLI
 
 Command-line interface for Cloud Service Foundry.
 
@@ -9,12 +9,12 @@ Command-line interface for Cloud Service Foundry.
 ## Installation
 
 ```bash
-git clone https://github.com/cs-foundry/CSF-CLI.git
-cd CSF-CLI
+git clone https://github.com/cs-foundry/CSFX-CLI.git
+cd CSFX-CLI
 cargo install --path cli
 ```
 
-The `csf` binary is installed to `~/.cargo/bin/csf`. Ensure `~/.cargo/bin` is in your `PATH`.
+The `csfx` binary is installed to `~/.cargo/bin/csfx`. Ensure `~/.cargo/bin` is in your `PATH`.
 
 ## Update
 
@@ -26,33 +26,33 @@ cargo install --path cli --force
 ## Usage
 
 ```
-csf                         # interactive REPL
-csf login                   # authenticate against CSF-Core
-csf logout                  # remove stored credentials
-csf status                  # show current session info
-csf token                   # print stored JWT token (useful for scripts)
+csfx                         # interactive REPL
+csfx login                   # authenticate against CSFX-Core
+csfx logout                  # remove stored credentials
+csfx status                  # show current session info
+csfx token                   # print stored JWT token (useful for scripts)
 
-csf volumes list
-csf volumes get <id>
-csf volumes snapshots
-csf volumes nodes
+csfx volumes list
+csfx volumes get <id>
+csfx volumes snapshots
+csfx volumes nodes
 
-csf registry agents
-csf registry agents-get <id>
-csf registry pre-register <name> <hostname> [--os <os>] [--arch <arch>] [--ttl <hours>]
-csf registry pending
-csf registry pending-delete <id>
-csf registry deregister <id>
-csf registry stats
-csf registry tokens
+csfx registry agents
+csfx registry agents-get <id>
+csfx registry pre-register <name> <hostname> [--os <os>] [--arch <arch>] [--ttl <hours>]
+csfx registry pending
+csfx registry pending-delete <id>
+csfx registry deregister <id>
+csfx registry stats
+csfx registry tokens
 
-csf nodes list
-csf nodes metrics
+csfx nodes list
+csfx nodes metrics
 ```
 
 ## Configuration
 
-Config is stored at `~/.csf/config.json`:
+Config is stored at `~/.csfx/config.json`:
 
 ```json
 {
@@ -64,6 +64,6 @@ Config is stored at `~/.csf/config.json`:
 ## Scripting
 
 ```bash
-export JWT=$(csf token)
+export JWT=$(csfx token)
 GATEWAY_URL=http://localhost:8000 ./scripts/test-mtls.sh
 ```

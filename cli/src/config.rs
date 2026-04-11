@@ -12,14 +12,14 @@ pub struct Config {
 
 pub fn get_config_path() -> PathBuf {
     let mut path = dirs::home_dir().expect("home dir not found");
-    path.push(".csf");
+    path.push(".csfx");
     path.push("config.json");
     path
 }
 
 pub fn get_history_path() -> PathBuf {
     let mut path = dirs::home_dir().expect("home dir not found");
-    path.push(".csf");
+    path.push(".csfx");
     path.push("history");
     path
 }

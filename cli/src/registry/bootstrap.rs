@@ -49,7 +49,7 @@ pub async fn create(
     println!("  {}", "Bootstrap Token".bold());
     println!("  {}", bt.token.cyan().bold());
     println!();
-    display::info("embed this token in services.csf-daemon.registrationToken in your NixOS config");
+    display::info("embed this token in services.csfx-daemon.registrationToken in your NixOS config");
     display::info("the token is valid for all nodes until TTL expires or max_uses is reached");
 
     Ok(())

@@ -22,16 +22,25 @@ pub async fn run_status() -> Result<(), Box<dyn std::error::Error>> {
 
     display::section("Control Plane Update Status");
     display::kv("current", resp["current_version"].as_str().unwrap_or("-"));
-    display::kv("desired", resp["desired_version"].as_str().unwrap_or("-"));
+    display::kv("desired version", resp["desired_version"].as_str().unwrap_or("-"));
+    display::kv("resolved rev", resp["desired_flake_rev"].as_str().unwrap_or("-"));
 
-    let result = resp["last_result"].as_str().unwrap_or("-");
-    let color = match result {
-        "success" => colored::Color::Green,
+    let build_status = resp["build_status"].as_str().unwrap_or("-");
+    let build_color = match build_status {
+        "ready" => colored::Color::Green,
+        "building" => colored::Color::Yellow,
         "failed" => colored::Color::Red,
-        "in_progress" => colored::Color::Yellow,
         _ => colored::Color::White,
     };
-    display::kv_colored("last result", result, color);
+    display::kv_colored("build status", build_status, build_color);
+
+    let result = resp["last_result"].as_str().unwrap_or("-");
+    let result_color = match result {
+        "success" => colored::Color::Green,
+        "failed" => colored::Color::Red,
+        _ => colored::Color::White,
+    };
+    display::kv_colored("last result", result, result_color);
 
     let paused = resp["paused"].as_bool().unwrap_or(false);
     display::kv_colored(

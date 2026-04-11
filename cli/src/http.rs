@@ -2,8 +2,8 @@ use crate::config::load_config;
 use serde_json::Value;
 
 pub fn auth() -> Result<(reqwest::Client, String, String), Box<dyn std::error::Error>> {
-    let config = load_config().ok_or("not authenticated, run: csf login")?;
-    let token = config.token.ok_or("not authenticated, run: csf login")?;
+    let config = load_config().ok_or("not authenticated, run: csfx login")?;
+    let token = config.token.ok_or("not authenticated, run: csfx login")?;
     Ok((reqwest::Client::new(), config.server, token))
 }
 
