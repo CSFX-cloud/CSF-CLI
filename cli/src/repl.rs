@@ -12,6 +12,7 @@ use crate::events::EventCommands;
 use crate::networks::NetworkCommands;
 use crate::nodes::NodeCommands;
 use crate::registry::RegistryCommands;
+use crate::ssh::SshCommands;
 use crate::system::SystemCommands;
 use crate::tenant::TenantCommands;
 use crate::volumes::VolumeCommands;
@@ -67,6 +68,7 @@ const COMMANDS: &[(&str, &str)] = &[
     ("tenant user-delete <id>", "delete a user"),
     ("tenant roles", "list available roles"),
     ("tenant set-role --user <id> --role <role-id>", "assign a role to a user"),
+    ("ssh connect <node>", "open ssh session to a cluster node"),
     ("clear", "clear the terminal screen"),
     ("help", "show available commands"),
     ("exit", "exit the shell"),
@@ -200,6 +202,7 @@ fn print_help() {
                 "tenant set-role --user <id> --role <role-id>",
             ],
         ),
+        ("SSH", &["ssh connect <node>"]),
         ("Shell", &["clear", "help", "exit"]),
     ];
 
@@ -454,6 +457,21 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
             let user = parse_flag(parts, "--user").unwrap_or("").to_string();
             let role = parse_flag(parts, "--role").unwrap_or("").to_string();
             crate::tenant::run(TenantCommands::SetRole { user, role }).await?
+        }
+
+        ["ssh", "connect", node] => {
+            crate::ssh::run(SshCommands::Connect {
+                node: node.to_string(),
+                port: 22,
+            })
+            .await?
+        }
+        ["ssh", "connect", node, "--port", port] => {
+            crate::ssh::run(SshCommands::Connect {
+                node: node.to_string(),
+                port: port.parse().unwrap_or(22),
+            })
+            .await?
         }
 
         ["clear"] => {

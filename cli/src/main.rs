@@ -6,6 +6,7 @@ mod networks;
 mod nodes;
 mod registry;
 mod repl;
+mod ssh;
 mod system;
 mod tenant;
 mod user;
@@ -46,6 +47,8 @@ enum Commands {
     Tenant(tenant::TenantCommands),
     #[command(subcommand, about = "Cluster-wide system statistics")]
     System(system::SystemCommands),
+    #[command(subcommand, about = "Connect to cluster nodes via SSH")]
+    Ssh(ssh::SshCommands),
 }
 
 #[tokio::main]
@@ -69,6 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Networks(cmd)) => networks::run(cmd).await?,
         Some(Commands::Tenant(cmd)) => tenant::run(cmd).await?,
         Some(Commands::System(cmd)) => system::run(cmd).await?,
+        Some(Commands::Ssh(cmd)) => ssh::run(cmd).await?,
     }
 
     Ok(())
