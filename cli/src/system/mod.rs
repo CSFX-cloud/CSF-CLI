@@ -13,7 +13,9 @@ pub enum SystemCommands {
     Update {
         version: String,
     },
-    UpdateStatus,
+    UpdateWatch,
+    UpdatePause,
+    UpdateResume,
     CheckUpdate {
         #[arg(long, help = "include pre-release versions")]
         pre: bool,
@@ -24,7 +26,9 @@ pub async fn run(cmd: SystemCommands) -> Result<(), Box<dyn std::error::Error>> 
     match cmd {
         SystemCommands::Stats { watch } => stats::run(watch).await,
         SystemCommands::Update { version } => update::run(version).await,
-        SystemCommands::UpdateStatus => update::run_status().await,
+        SystemCommands::UpdateWatch => update::run_status().await,
+        SystemCommands::UpdatePause => update::run_pause().await,
+        SystemCommands::UpdateResume => update::run_resume().await,
         SystemCommands::CheckUpdate { pre } => releases::run(pre).await,
     }
 }

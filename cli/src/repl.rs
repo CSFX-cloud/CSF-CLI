@@ -45,6 +45,11 @@ const COMMANDS: &[(&str, &str)] = &[
     ("nodes agent-metrics <id> --watch", "live-refresh agent metrics"),
     ("system stats", "show cluster-wide aggregated stats"),
     ("system stats --watch", "live-refresh cluster stats"),
+    ("system update <version>", "schedule and watch a control plane update"),
+    ("system update-watch", "watch current update progress"),
+    ("system update-pause", "pause automatic updates"),
+    ("system update-resume", "resume automatic updates"),
+    ("system check-update", "check for available releases"),
     ("workloads list", "list all workloads"),
     ("workloads get <id>", "show workload details"),
     ("workloads create <name> <image>", "schedule a new workload"),
@@ -163,7 +168,18 @@ fn print_help() {
                 "nodes agent-metrics <id> --watch",
             ],
         ),
-        ("System", &["system stats", "system stats --watch"]),
+        (
+            "System",
+            &[
+                "system stats",
+                "system stats --watch",
+                "system update <version>",
+                "system update-watch",
+                "system update-pause",
+                "system update-resume",
+                "system check-update",
+            ],
+        ),
         (
             "Workloads",
             &[
@@ -329,6 +345,24 @@ async fn dispatch(parts: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
         }
         ["system", "stats", "--watch"] => {
             crate::system::run(SystemCommands::Stats { watch: true }).await?
+        }
+        ["system", "update", version] => {
+            crate::system::run(SystemCommands::Update { version: version.to_string() }).await?
+        }
+        ["system", "update-watch"] => {
+            crate::system::run(SystemCommands::UpdateWatch).await?
+        }
+        ["system", "update-pause"] => {
+            crate::system::run(SystemCommands::UpdatePause).await?
+        }
+        ["system", "update-resume"] => {
+            crate::system::run(SystemCommands::UpdateResume).await?
+        }
+        ["system", "check-update"] => {
+            crate::system::run(SystemCommands::CheckUpdate { pre: false }).await?
+        }
+        ["system", "check-update", "--pre"] => {
+            crate::system::run(SystemCommands::CheckUpdate { pre: true }).await?
         }
 
         ["workloads", "metrics", id] => {
